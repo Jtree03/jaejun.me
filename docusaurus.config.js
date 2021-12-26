@@ -26,7 +26,7 @@ const config = {
           showReadingTime: true,
           // blogSidebarTitle: "All posts",
           // blogSidebarCount: "ALL",
-          editUrl: "https://github.com/jtree03/jaejun.me/",
+          editUrl: "https://github.com/Jtree03/jaejun.me/blob/main",
           routeBasePath: "/",
         },
         theme: {
