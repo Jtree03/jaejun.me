@@ -8,13 +8,13 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const config = {
   title: "JaeJun.me",
   tagline: "JaeJun's blog site.",
-  url: "http://jaejun.me",
+  url: "https://jaejun.me",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
-  organizationName: "jtree03", // Usually your GitHub org/user name.
-  projectName: "jaejun.me", // Usually your repo name.
+  organizationName: "Jtree03",
+  projectName: "JaeJun.me",
 
   presets: [
     [
@@ -24,14 +24,13 @@ const config = {
         docs: false,
         blog: {
           showReadingTime: true,
-          // blogSidebarTitle: "All posts",
-          // blogSidebarCount: "ALL",
           editUrl: "https://github.com/Jtree03/jaejun.me/blob/main",
           routeBasePath: "/",
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
+        googleAnalytics: { trackingID: "UA-201234083-1" },
       }),
     ],
   ],
@@ -46,13 +45,6 @@ const config = {
           src: "img/favicon.ico",
         },
         items: [
-          // {
-          //   type: "doc",
-          //   docId: "intro",
-          //   position: "left",
-          //   label: "Tutorial",
-          // },
-          // { to: "/", label: "Blog", position: "left" },
           { to: "/about", label: "About", position: "right" },
           // {
           //   href: "https://github.com/Jtree03",
@@ -77,15 +69,6 @@ const config = {
               },
             ],
           },
-          // {
-          //   title: "Docs",
-          //   items: [
-          //     {
-          //       label: "Tutorial",
-          //       to: "/docs/intro",
-          //     },
-          //   ],
-          // },
           {
             title: "Email",
             items: [
@@ -97,10 +80,6 @@ const config = {
                 label: "Naver",
                 href: "mailto:wowns0903@naver.com",
               },
-              // {
-              //   label: "Twitter",
-              //   href: "https://twitter.com/docusaurus",
-              // },
             ],
           },
           {
