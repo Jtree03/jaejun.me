@@ -98,7 +98,12 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
+      googleAdsense: {
+        dataAdClient: 'ca-pub-4869276592827991',
+      },
     }),
+
+    plugins: ['docusaurus-plugin-google-adsense'],
 };
 
 module.exports = config;
