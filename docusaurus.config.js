@@ -6,7 +6,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "JaeJun.me",
+  title: "조재준",
   tagline: "JaeJun's blog site.",
   url: "https://jaejun.me",
   baseUrl: "/",
@@ -14,7 +14,7 @@ const config = {
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
   organizationName: "Jtree03",
-  projectName: "JaeJun.me",
+  projectName: "jaejun.me",
 
   presets: [
     [
