@@ -45,7 +45,11 @@ const config = {
           src: "img/favicon.ico",
         },
         items: [
-          { to: "/about", label: "About", position: "right" },
+          {
+            to: "https://handsomely-boater-32d.notion.site/bd1205fe4362494193019279f33500f1",
+            label: "About",
+            position: "right",
+          },
           // {
           //   href: "https://github.com/Jtree03",
           //   label: "GitHub",
@@ -99,11 +103,11 @@ const config = {
         darkTheme: darkCodeTheme,
       },
       googleAdsense: {
-        dataAdClient: 'ca-pub-4869276592827991',
+        dataAdClient: "ca-pub-4869276592827991",
       },
     }),
 
-    plugins: ['docusaurus-plugin-google-adsense'],
+  plugins: ["docusaurus-plugin-google-adsense"],
 };
 
 module.exports = config;
