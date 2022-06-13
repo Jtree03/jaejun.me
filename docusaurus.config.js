@@ -69,7 +69,7 @@ const config = {
               },
               {
                 label: "About",
-                to: "/about",
+                to: "https://handsomely-boater-32d.notion.site/bd1205fe4362494193019279f33500f1",
               },
             ],
           },
