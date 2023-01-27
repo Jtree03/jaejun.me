@@ -30,7 +30,7 @@ const config = {
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
-        googleAnalytics: { trackingID: "UA-201234083-1" },
+        googleAnalytics: { trackingID: "G-H34WTT5JJB" },
       }),
     ],
   ],
