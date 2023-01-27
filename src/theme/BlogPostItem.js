@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import OriginalBlogPostItem from "@theme-original/BlogPostItem";
-import useThemeContext from "@theme/hooks/useThemeContext";
+import { useThemeConfig } from "@docusaurus/theme-common";
 
 function BlogPostItem(props) {
-  const { isDarkTheme } = useThemeContext();
+  const { isDarkTheme } = useThemeConfig();
   const utterancesTheme = isDarkTheme ? "github-dark" : "github-light";
   const containerRef = useRef(null);
 
