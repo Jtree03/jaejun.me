@@ -1,0 +1,276 @@
+---
+slug: solid
+title: SOLID 예제로 보기
+authors: jtree03
+tags: [SOLID, OOP, 객체 지향]
+---
+
+SOLID 란 무엇인가에 대해 예제로 보겠습니다.
+
+개념적인 부분은 간략하게 넘어가고 예제 위주로 설명하겠습니다.
+
+<!--truncate-->
+
+## SOLID란?
+
+객체 지향 프로그래밍의 대표 주자인 로버트 마틴이 2000년대 초반때 명명한 객체 지향에서의 원칙을 마이클 페더스가 앞글자를 따와서 만든 용어입니다.
+
+- 단일 책임 원칙 (Single responsibility principle)
+- 개방-폐쇄 원칙 (Open/closed principle)
+- 리스코프 치환 원칙 (Liskov substitution principle)
+- 인터페이스 분리 원칙 (Interface segregation principle)
+- 의존관계 역전 원칙 (Dependency inversion principle)
+
+## 단일 책임 원칙
+
+클래스는 하나의 기능만 해야한다라는 의미로 잘 알려져 있지만 로버트 마틴은 이것을 하나의 기능이 변경될 때 이유는 한가지여야 한다라고 설명하고 있습니다.
+
+우선 안지켜진 예제부터 보겠습니다.
+
+```typescript
+function whatMode(mode: boolean) {
+  return `${mode.toString()} mode!`;
+}
+```
+
+위와 같이 boolean 값을 받아서 출력하는 간단한 함수가 있습니다.
+이는 **mode** 가 true 일 때와 false 일 때, 결과가 우연히 같게 되어서 만들어지게 되었습니다.
+여기서 만약 **"true 일 때, 앞쪽에 wow를 붙여주세요"** 라는 요구사항이 들어온다면 다음과 같이 변경해야합니다.
+
+```typescript
+function whatMode(mode: boolean) {
+  if (mode) {
+    return `wow true mode!`;
+  }
+
+  return `false mode!`;
+}
+```
+
+요구 사항은 계속 변할 것입니다.
+true 와 false 는 서로 다른 개체의 요구사항임에도 불구하고 항상 같은 함수를 변경해야합니다.
+이를 단일 책임 원칙으로 변경하면 다음과 같이 만들 수 있습니다.
+
+```typescript
+function trueMode() {
+  return `wow true mode!`;
+}
+
+function falseMode() {
+  return `false mode!`;
+}
+
+function whatMode(mode: boolean) {
+  return mode ? trueMode() : falseMode();
+}
+```
+
+이 원칙이 지켜지지 않는 이유중 하나는 성급한 재사용에 있습니다.
+
+이는 미래에 따로 변경될 가능성이 있는 기능을 미리 합쳐놓기 때문에 발생합니다.
+
+UI 컴포넌트에서도 이런 현상이 나타나는데 이는 [다음 영상](https://www.youtube.com/watch?v=HYgKBvLr49c)을 보시면 더욱 자세하게 설명되어 있습니다.
+
+## 개방 폐쇄 원칙, 리스코프 치환 원칙, 의존성 역전 원칙
+
+보통 세개를 풀어서 설명하는데 여기서는 묶어서 설명하겠습니다.
+
+**개방 폐쇄 원칙**: 소프트웨어는 수정에는 닫혀있고 확장에 열려있어야 한다.
+
+**리스코프 치환 원칙**: 추상 자료형은 구체 자료형으로 변경할 수 있다.
+
+**의존성 역전 원칙**: 모듈은 추상체에 의존해야한다.
+
+우선 적용이 안 된 예제부터 보겠습니다.
+다음과 같이 s3 를 이용하여 파일을 업로드 및 다운로드 하는 모듈이 있다고 가정하겠습니다.
+
+```typescript
+// flie-service.ts
+import s3 from "aws/s3";
+
+function upload(file: File) {
+  return s3.upload(file: File);
+}
+
+function download(url: URL) {
+  return s3.download(url);
+}
+```
+
+이런 상황에서 s3 **비용**이 과다 청구되어 다른 서비스를 이용해야한다고 의사결정이 이루어졌습니다.
+기존 구조대로라면은 아마 검색끝에 다음과 같이 변경하게 될 것입니다.
+
+```typescript
+// flie-service.ts
+import r2 from "cloudflare/r2";
+
+function upload(file: File) {
+  return r2.upload(file: File);
+}
+
+function download(url: URL) {
+  return r2.download(url);
+}
+```
+
+각 서비스의 인터페이스를 맞추지 않은 코드라 간단하게 보이겠지만 현실은 인터페이스가 다르고 행동도 다를 것이기 때문에 더 복잡한 형태였을 것입니다.
+또한 갑작스럽게 다른 서비스 회사에서 비용 지원을 받게된다면 또 수정해야할 수도 있습니다.
+
+이제, 위 **세가지 원칙**들을 이용해서 변경해보겠습니다.
+
+```typescript
+// flie-service.ts
+import s3 from "aws/s3";
+import r2 from "clodflare/r2";
+
+// 추상체
+abstract class FileService {
+  abstract upload(file: File): Promise<URL>;
+  abstract download(url: URL): Promise<File>;
+}
+
+// 1. 구현체 - 개방 폐쇄 원칙
+class S3FileService extends FileService {
+  async upload(file) {
+    return s3.upload(file);
+  }
+  async download(url) {
+    return s3.download(url);
+  }
+}
+
+// 2. 구현체 - 개방 폐쇄 원칙
+class R2FileService extends FileService {
+  async upload(file) {
+    return r2.upload(file);
+  }
+  async download(url) {
+    return r2.download(url);
+  }
+}
+
+// fileService - 의존성 역전 원칙
+function upload(fileService: FileService, file: File) {
+  return fileService.upload(file: File);
+}
+
+// fileService - 의존성 역전 원칙
+function download(fileService: FileService, url: URL) {
+  return fileService.download(url);
+}
+
+.
+.
+.
+
+const s3FileService = new S3FileService();
+const mockFile = new File("mock");
+// s3FileService -> FileService - 리스코프 치환 원칙
+upload(s3FileService, mockFile)
+```
+
+**upload 함수**와 **download 함수**는 **FileService** 라는 추상체에 의존하게 되었습니다. - 의존성 역전 원칙
+
+FileService 는 이제 변경하지 않고 추가함으로써 기능을 달리할 수 있게 되었습니다. - 개방 폐쇄 원칙
+
+각 파일 서비스들은 **upload 함수**와 **download 함수**의 **FileService**에 호환이 됩니다. - 리스코프 치환 원칙
+
+이제 다른 클라우드 서비스로 갑작스레 변경한다고 해도 쉽게 대응이 가능합니다.
+예를 들어, GCP에서 크레딧을 받아 해당 서비스를 사용하게 결정이 된다면 다음과 같이 만들 수 있습니다.
+
+```typescript
+// flie-service.ts
+import filestore from "gcp/filestore";
+
+class FilestoreFileService extends FileService {
+  async upload(file) {
+    return filestore.upload(file);
+  }
+  async download(url) {
+    return filestore.download(url);
+  }
+}
+```
+
+또한, 필요하다면 다음과 같이 전략적으로 파일 서비스를 선택할 수 있게 만들 수 있습니다.
+
+```typescript
+function uploadWithOptimizedCost(file: File) {\
+  // 비용이 저렴한 파일 서비스를 반환하는 함수
+  const fileService = getOptimizedCostFileService();
+  upload(fileService, file);
+}
+```
+
+## 인터페이스 분리 원칙
+
+인스턴스는 자신이 사용하지 않는 메소드에 의존하지 않아야 한다라는 원칙입니다.
+
+다음과 같은 클래스가 있다라고 가정하겠습니다.
+
+```typescript
+abstract class 팩스복합기 {
+  abstract 인쇄하기(): 인쇄물;
+  abstract 스캔하기(): 스캔파일;
+  abstract 팩스보내기(): boolean;
+}
+```
+
+여기서 프린터기를 해당 클래스를 이용해서 만들어 보겠습니다.
+
+```typescript
+class 프린터기 extends 팩스복합기 {
+  인쇄하기() {
+    // 인쇄하는 로직
+  }
+  스캔하기() {
+    // throw 하거나 null 을 반환하거나 스캔 로직을 넣거나...
+  }
+  팩스보내기() {
+    // throw 하거나 null 을 반환하거나 팩스 보내는 로직을 넣거나...
+  }
+}
+```
+
+인쇄기는 인쇄하기만 구현해도 되지만 팩스복합기를 상속 받았기 때문에 스캔하기와 팩스보내기도 구현하게 되었습니다.
+이 때, 팩스복합기라는 클래스보다 각 기능별로 인터페이스를 나누는 방법을 사용하는 것이 구현하는 코드를 줄이면서 정확한 기능을 하게 만들 수 있습니다.
+
+```typescript
+interface 인쇄기 {
+  인쇄하기(): 인쇄물;
+}
+
+interface 스캐너 {
+  스캔하기(): 스캔파일;
+}
+
+interface 팩스 {
+  팩스보내기(): boolean;
+}
+
+class 복합기 implements 인쇄기, 스캐너 {
+  인쇄하기() {
+    // 인쇄로직
+  }
+  스캔하기() {
+    // 스캔 로직
+  }
+}
+```
+
+이렇게 인터페이스로 분리된 클래스는 해당 행동만 구현하여서 불필요한 행동에 의존하지 않을 수 있게 되었습니다.
+
+## 결론
+
+SOLID 는 객체 지향의 주요 원칙으로 통용되고 있습니다.
+
+이런 원칙을 잘 지켜서 개발한다면 소프트웨어 공학적인 효과를 톡톡히 볼 수 있을 거라 생각합니다.
+
+---
+
+질문 사항이나 틀린 사항 있을 시 피드백 주시면 감사하겠습니다.
+
+## 참고 자료
+
+- [위키 백과 - SOLID (객체 지향 설계)](<https://ko.wikipedia.org/wiki/SOLID_(%EA%B0%9D%EC%B2%B4_%EC%A7%80%ED%96%A5_%EC%84%A4%EA%B3%84)>)
+- [컴포넌트 다시 생각하기 - FE 컨퍼런스](https://www.youtube.com/watch?v=HYgKBvLr49c)
