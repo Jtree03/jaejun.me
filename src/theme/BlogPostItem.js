@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import OriginalBlogPostItem from "@theme-original/BlogPostItem";
 import { useThemeConfig } from "@docusaurus/theme-common";
+import { useBlogPost } from "@docusaurus/theme-common/internal";
 
 function BlogPostItem(props) {
   const { isDarkTheme } = useThemeConfig();
+  const { isBlogPostPage } = useBlogPost();
   const utterancesTheme = isDarkTheme ? "github-dark" : "github-light";
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!props.isBlogPostPage) return;
+    if (!isBlogPostPage) return;
 
     const utterancesEl = containerRef.current.querySelector(
       "iframe.utterances-frame"
@@ -43,7 +45,7 @@ function BlogPostItem(props) {
   return (
     <>
       <OriginalBlogPostItem {...props} />
-      {props.isBlogPostPage && <div ref={containerRef} />}
+      {isBlogPostPage && <div ref={containerRef} />}
     </>
   );
 }
