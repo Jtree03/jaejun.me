@@ -1,0 +1,184 @@
+---
+slug: prisma_fluent_api
+title: Prisma 에서 N + 1 문제 해결하기 (Fluent API)
+description: Prisma 로 N + 1 문제를 해결하는 간단한 방법.
+authors: jtree03
+tags: [Prisma, Graphql, N + 1, Fluent API, Dataloader]
+---
+
+**Prisma** 를 사용할 때, **N + 1 문제**를 해결하는 간단한 방법을 소개하겠습니다.
+
+<!--truncate-->
+
+---
+
+## Dataloader?
+
+보통 N + 1 문제를 해결하기 위해서 Dataloader를 사용합니다.
+Dataloader에 관한 내용은 다른 곳에 많으니 현재 포스트에서는 다루진 않겠습니다.
+Prisma 에서는 이런 Dataloader 를 자체적으로 제공하고 있습니다.
+바로, Fluent API 입니다.
+
+## Fluent API
+
+Fluent API 는 **Prisma** 에서 자체 제공하는 API 이며 N + 1 문제 같은 특수한 상황에서 쿼리가 분리되는 문제를 해결하기 위해 존재합니다.
+예제를 보면서 사용법에 대해 알아보겠습니다.
+
+우선 다음과 같이 두개의 Prisma 모델이 있습니다.
+
+```typescript
+model User {
+  id   String @id
+  name String
+
+  posts Post[]
+}
+
+model Post {
+  id     String @id
+  title  String
+  userID String
+
+  user User @relation(fields: [userID], references: [id])
+}
+```
+
+post 에는 user 에 대한 릴레이션 정보(userID)가 있어서 user 정보를 Join 해서 들고 올 수 있습니다.
+마찬가지로, user 에는 posts 를 이용해서 User 와 연관된 Post 들을 가져올 수 있습니다.
+여기서 User 에 대한 posts 를 가져올 때 일반적으로 수행하는 쿼리는 다음과 같습니다.
+
+```typescript
+const posts: Post[] = await client.post.findMany({ where: { userID: "1" } });
+```
+
+이제, **Fluent API** 를 사용해보겠습니다.
+Fluent API 를 이용해서 데이터를 가져온다면 다음과 같이 가져올 수 있습니다.
+
+```typescript
+const postsByUser: Post[] = await client.user
+    .findUnique({ where: { id: "1" } })
+    .posts();
+```
+
+여기서 **posts()** 가 오늘의 주인공 **Fluent API** 입니다.
+Fluent API 는 **client.post.findMany** 와 같은 결과를 반환합니다.
+차이점은 내부의 Dataloader 로직이 작동하면 N + 1 문제를 방지(WHERE IN)하는 하나의 쿼리로 수행됩니다.
+
+유의 사항은 다음과 같습니다.
+
+1. **Prisma 모델에 연관하려는 모델의 릴레이션이 등록되어 있어야 합니다.**
+2. findUnique 나 findFirst 같은 단일행 쿼리 후 사용할 수 있습니다.
+3. 쿼리의 결과는 최종적으로 호출되는 Fluent API 의 타입으로 변하게 됩니다.
+
+릴레이션이 등록되어 있기 때문에 아래와 같이 반대로도 구성할 수 있습니다.
+
+```typescript
+const user: User | null = await client.post.findFirst().user();
+```
+
+게다가, 쿼리의 특성을 그대로 이어받기 때문에 where, include, skip, take 등의 옵션을 추가로 부여할 수 있습니다.
+
+```typescript
+const postsByUser: Post[] = await client.user
+    .findUnique({ where: { id: "1" } })
+    .posts({ cursor: "1", skip: 0, take: 10 });
+```
+
+또 하나의 특징으로 Fluent API 는 연관해서 호출할 수 있습니다.
+예를 들어, 아래와 같이 연관 모델이 있다고 가정해보겠습니다.
+
+```typescript
+model Profile {
+  id     String  @id
+  userID String? @unique
+
+  user User? @relation(fields: [userID], references: [id])
+}
+
+model User {
+  id   String @id
+  name String
+
+  posts   Post[]
+  profile Profile?
+}
+
+model Post {
+  id     String @id
+  title  String
+  userID String
+
+  user User @relation(fields: [userID], references: [id])
+}
+```
+
+Profile 과 User 는 1 대 1 관계로 연관되어 있고 User 와 Post 는 1 대 N 관계로 연관되어 있습니다.
+여기서 Fluent API 를 체이닝해서 호출할 수 있습니다.
+
+```typescript
+const postsByProfile: Post[] = await prisma.profile.findFirst().user().posts();
+```
+
+이제 Graphql 에서 Fluent API 를 사용하는 방법을 알아보겠습니다.
+
+## Fluent API in Graphql Resolver
+
+다음과 같이 간략하게 구성된 Resolver 가 있습니다.
+
+```typescript
+return {
+    Query: {
+        users: () => client.user.findMany(),
+        user: (id) => client.user.findUnique({ where: { id } }),
+    },
+    User: {
+        posts: (user) =>
+            client.user.findUnique({ where: { id: user.id } }).posts(),
+    },
+};
+```
+
+만약 레이어로 구성된 아키텍처라면 레이어 함수안에 쿼리가 있어도 서브타입 위치만 맞다면 해당 레이어 함수를 호출해도 괜찮습니다. (ex. UserRepository, PostRepository)
+
+쿼리는 다음과 같이 구성할 수 있습니다.
+
+```graphql
+query {
+    users {
+        id
+        name
+        posts {
+            id
+            title
+        }
+    }
+}
+```
+
+실제로 변환되는 sql 은 다음과 같습니다.
+
+```sql
+SELECT `test`.`User`.`id`, `test`.`User`.`name`
+    FROM `test`.`User`
+    WHERE 1=1
+SELECT `test`.`User`.`id`
+    FROM `test`.`User`
+    WHERE `test`.`User`.`id` IN (?,?)
+SELECT `test`.`Post`.`id`, `test`.`Post`.`title`, `test`.`Post`.`userID`
+    FROM `test`.`Post`
+    WHERE `test`.`Post`.`userID` IN (?,?)
+```
+
+만약 Dataloader 나 Fluent API 가 적용되어 있지 않았다면 User 수만큼 쿼리가 늘어났을 겁니다.
+이제 Fluent API 를 사용하여 간편하게 N + 1 문제를 방지하시면 되겠습니다!
+
+---
+
+이상 graphql 에서 Fluent API 사용법이었습니다.
+
+틀린 사항이나 피드백 있을시 마음껏 남겨주세요!
+
+## 참고 자료
+
+-   [prisma 공식 홈페이지](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#fluent-api)
+-   [Fluent API Issue](https://github.com/prisma/prisma/issues/1984)

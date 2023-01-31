@@ -105,6 +105,7 @@ const config = {
       googleAdsense: {
         dataAdClient: "ca-pub-4869276592827991",
       },
+      image: "img/favicon.ico",
     }),
 
   plugins: ["docusaurus-plugin-google-adsense"],
