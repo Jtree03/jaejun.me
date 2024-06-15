@@ -45,11 +45,11 @@ const config = {
                     src: "img/favicon.ico",
                 },
                 items: [
-                    {
-                        to: "https://handsomely-boater-32d.notion.site/bd1205fe4362494193019279f33500f1",
-                        label: "About",
-                        position: "right",
-                    },
+                    // {
+                    //     to: "https://handsomely-boater-32d.notion.site/bd1205fe4362494193019279f33500f1",
+                    //     label: "About",
+                    //     position: "right",
+                    // },
                     // {
                     //   href: "https://github.com/Jtree03",
                     //   label: "GitHub",
@@ -67,10 +67,10 @@ const config = {
                                 label: "Blog",
                                 to: "/",
                             },
-                            {
-                                label: "About",
-                                to: "https://handsomely-boater-32d.notion.site/bd1205fe4362494193019279f33500f1",
-                            },
+                            // {
+                            //     label: "About",
+                            //     to: "https://handsomely-boater-32d.notion.site/bd1205fe4362494193019279f33500f1",
+                            // },
                         ],
                     },
                     {
